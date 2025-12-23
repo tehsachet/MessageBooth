@@ -7,22 +7,11 @@
 
   <link rel="stylesheet" href="style.css" />
 
-  <!-- GLOBAL BGM -->
   <script src="bgm.js" defer></script>
 
-  <!-- PAGE 1 LOGIC -->
   <script src="page1.js" defer></script>
 
   <style>
-    /* ======================================================
-       INDEX.HTML OVERRIDE ONLY
-       Tujuan:
-       1) bintang & shooting star masuk "wilayah langit" (stage)
-       2) bintang ada DI ATAS sky-night (bukan di bawah)
-       3) tidak meleber ke body (area frame/background)
-       ====================================================== */
-
-    /* body jadi warna frame (nutup area kosong) */
     html, body { height: 100%; }
     body{
       margin:0;
@@ -31,14 +20,12 @@
     }
     body.night{ background:#2b163a; }
 
-    /* pastiin stage jadi anchor + clip */
     .stage{
       position: relative;
-      overflow: hidden;       /* ✅ kunci: apapun di dalam stage gak bisa keluar */
-      isolation: isolate;     /* ✅ stacking context biar z-index aman */
+      overflow: hidden;       
+      isolation: isolate;     
     }
 
-    /* HUD buttons: keep posisi kamu */
     .hud-btn{
       width: 76px !important;
       height: 76px !important;
@@ -64,7 +51,6 @@
       right: 18px !important;
     }
 
-    /* sky/road fit like buildings */
     .layer.sky,
     .layer.road{
       position: absolute;
@@ -78,7 +64,6 @@
       pointer-events: none;
     }
 
-    /* urutan layer */
     .layer.sky{ z-index: 0; }
     #sky-night{ opacity: 0; transition: opacity 240ms ease; }
     #sky-day{ opacity: 1; transition: opacity 240ms ease; }
@@ -88,33 +73,22 @@
     .layer.road{ z-index: 1; }
     #road{ transition: filter 240ms ease; }
     body.night #road{ filter: brightness(0.78) saturate(0.95); }
-
-    /* ======================================================
-       1) MATIKAN STARS LAMA DARI style.css
-       (yang nempel di body.night::before/after dan fixed)
-       Ini sumber utama bintang meleber ke area luar stage.
-       ====================================================== */
     body.night::before,
     body.night::after{
       content: none !important;
       display: none !important;
     }
 
-    /* ======================================================
-       2) STARS BARU: NEMPEL KE STAGE (DI ATAS SKY)
-       ====================================================== */
     .sky-stars{
       position:absolute;
       inset:0;
-      z-index: 2;            /* ✅ di atas sky (0) dan road (1) */
+      z-index: 2;            
       pointer-events:none;
-      overflow:hidden;       /* extra safety */
+      overflow:hidden;       
       opacity: 0;
       transition: opacity 240ms ease;
     }
     body.night .sky-stars{ opacity: 1; }
-
-    /* layer bintang kecil (mirip yang di style.css) */
     .sky-stars::before,
     .sky-stars::after{
       content:"";
@@ -164,7 +138,6 @@
       animation: starsDriftB 110s linear infinite, starsTwinkleB 4.6s ease-in-out infinite;
     }
 
-    /* same keyframes (nama sama seperti style.css biar konsisten) */
     @keyframes starsDriftA {
       from { transform: translate3d(0,0,0); }
       to   { transform: translate3d(-140px, 70px, 0); }
@@ -182,17 +155,13 @@
       50%     { opacity: 0.45; }
     }
 
-    /* ======================================================
-       3) SHOOTING STAR: PAKSA MASUK STAGE & DI ATAS SKY
-       (matikan versi fixed dari style.css dengan override)
-       ====================================================== */
     .shooting-star{
-      position: absolute !important;     /* ✅ override fixed */
+      position: absolute !important;     
       width: 220px;
       height: 2px;
       background: linear-gradient(to right, transparent, #fff);
       opacity: 0;
-      z-index: 3;                        /* ✅ di atas stars + sky */
+      z-index: 3;                        
       pointer-events: none;
       filter: drop-shadow(0 0 6px rgba(255,255,255,0.7));
     }
@@ -201,7 +170,6 @@
       animation: shootStage 40s linear infinite;
     }
 
-    /* versi stage-friendly (pakai % biar relatif ke stage) */
     @keyframes shootStage{
       0%, 90% { opacity: 0; transform: translate(-30%, -10%) rotate(-20deg); }
       92%     { opacity: 1; transform: translate(10%, 10%) rotate(-20deg); }
@@ -209,7 +177,6 @@
       100%    { opacity: 0; transform: translate(30%, 20%) rotate(-20deg); }
     }
 
-    /* toggle kanan bawah */
     .night-toggle{
       position: fixed !important;
       right: 16px !important;
@@ -218,7 +185,6 @@
       z-index: 99999;
     }
 
-    /* rotate overlay */
     #rotateOverlay{
       position: fixed;
       inset: 0;
@@ -309,7 +275,6 @@
 </head>
 
 <body>
-  <!-- ROTATE OVERLAY -->
   <div id="rotateOverlay" aria-hidden="true">
     <div class="rotate-card" role="dialog" aria-modal="true" aria-label="Rotate device">
       <div class="phone"></div>
@@ -319,23 +284,17 @@
     </div>
   </div>
 
-  <!-- SCENE -->
   <main class="scene">
     <section class="stage" id="stage" aria-label="Message Booth Scene">
 
-      <!-- SKY -->
       <img id="sky-night" class="layer sky" src="Assets/page1/sky-night.png" alt="sky night">
 
-      <!-- ✅ STARS (stage-only, night-only, above sky) -->
       <div class="sky-stars" aria-hidden="true"></div>
 
-      <!-- ✅ SHOOTING STAR (stage-only, above sky) -->
       <div class="shooting-star" aria-hidden="true"></div>
 
-      <!-- ROAD -->
       <img id="road" class="layer road" src="Assets/page1/road.png" alt="road">
 
-      <!-- ASSETS -->
       <img class="layer buildings" src="Assets/page1/buildings.png" alt="buildings">
       <img class="layer shadow" src="Assets/page1/shadow.png" alt="shadow">
       <img class="layer inner" src="Assets/page1/booth-inner.png" alt="booth inner">
@@ -343,24 +302,19 @@
 
       <button id="booth-hit" class="booth-hit" type="button" aria-label="Open Message Booth"></button>
 
-      <!-- WALKERS -->
       <div id="walkers-layer" class="walkers-layer" aria-hidden="true"></div>
 
-      <!-- HUD -->
       <button id="btn-ig" class="hud-btn" type="button" aria-label="Instagram"></button>
       <button id="btn-sound" class="hud-btn" type="button" aria-label="Sound"></button>
     </section>
   </main>
 
-  <!-- FADE -->
   <div id="fade" class="fade" aria-hidden="true"></div>
 
-  <!-- IG icon via CSS -->
   <style>
     #btn-ig{ background-image: url("Assets/page1/instagram.png"); }
   </style>
 
-  <!-- klik IG -> instagram -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const ig = document.getElementById("btn-ig");
@@ -373,3 +327,4 @@
 
 </body>
 </html>
+
