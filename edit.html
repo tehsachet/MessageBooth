@@ -23,7 +23,7 @@
       margin:0;
       overflow:hidden;
       font-family:"League Spartan", system-ui, Arial, sans-serif;
-      background: var(--frame); /* ✅ dulu #000 */
+      background: var(--frame); 
     }
 
     .scene{
@@ -139,7 +139,6 @@
       overflow:visible;
       user-select:none;
 
-      /* templateX: jangan diganggu */
       transform: translate(10px, -5px);
     }
 
@@ -357,7 +356,7 @@
     const STORAGE_EDIT = "mb_edit_state_v1";
     const EXPORT_CACHE_KEY = "mb_last_export_png";
 
-    const RESTORE_FLAG = "mb_restore_from_page4"; // sessionStorage flag
+    const RESTORE_FLAG = "mb_restore_from_page4"; 
 
     const stage = document.getElementById("stage");
     const paper = document.getElementById("paper");
@@ -414,7 +413,6 @@
       return saved || "Assets/page3/template1.png";
     }
 
-    /* ===== SAVE STATE (hanya dipakai untuk page4 back) ===== */
     let saveTimer = null;
 
     function getPaperInnerRect(){
@@ -443,12 +441,10 @@
     }
 
     function clearEditStateHard(){
-      // kosongin edit total (untuk refresh / new visit)
       try { localStorage.removeItem(STORAGE_EDIT); } catch {}
       try { localStorage.removeItem(EXPORT_CACHE_KEY); } catch {}
       try { sessionStorage.removeItem(RESTORE_FLAG); } catch {}
 
-      // clear UI
       textLayer.innerHTML = "";
       ctx.clearRect(0,0,canvas.width,canvas.height);
       showPalette(false);
@@ -456,7 +452,6 @@
     }
 
     function restoreEditStateIfAllowed(){
-      // restore HANYA kalau flag dari page4 ada
       let allow = false;
       try { allow = sessionStorage.getItem(RESTORE_FLAG) === "1"; } catch { allow = false; }
 
@@ -466,7 +461,6 @@
         return;
       }
 
-      // consume flag (biar sekali pakai)
       try { sessionStorage.removeItem(RESTORE_FLAG); } catch {}
 
       let raw = "";
@@ -496,20 +490,16 @@
       showPalette(false);
     }
 
-    /* ===== NAV ===== */
     btnBack.addEventListener("click", () => {
-      // balik ke page2 (pilih template) => harus “mulai baru”
       clearEditStateHard();
       location.href = PAGE2;
     });
 
     btnNext.addEventListener("click", () => {
-      // menuju page4 => save snapshot dulu
       saveEditState();
       location.href = PAGE4;
     });
 
-    /* ===== CANVAS ===== */
     function resizeCanvas() {
       const inner = paper.querySelector(".paper-inner");
       const rect = inner.getBoundingClientRect();
@@ -536,7 +526,6 @@
       scheduleSave();
     });
 
-    /* ===== MODE ===== */
     let mode = "none";
 
     function setMode(next) {
@@ -565,7 +554,6 @@
       createTextbox();
     });
 
-    /* ===== HISTORY ===== */
     let history = [];
     let redoStack = [];
 
@@ -625,7 +613,6 @@
       if (e.ctrlKey && key === "y") { e.preventDefault(); btnRedo.click(); }
     });
 
-    /* ===== DRAW ===== */
     let drawing = false;
 
     function localPos(ev){
@@ -671,7 +658,6 @@
     canvas.addEventListener("pointerup", endDraw);
     canvas.addEventListener("pointercancel", endDraw);
 
-    /* ===== Cursor text vs move ===== */
     function isPointerOnText(box, clientX, clientY){
       let range = null;
 
@@ -867,15 +853,12 @@
       });
     }
 
-    /* ===== INIT ===== */
     document.addEventListener("DOMContentLoaded", () => {
       bootCanvas();
 
-      // set template dulu (always)
       tplImg.src = resolveTemplateRelNow();
       tplImg.onerror = () => { tplImg.src = "Assets/page3/template1.png"; };
 
-      // restore cuma kalau balik dari page4
       setTimeout(() => {
         restoreEditStateIfAllowed();
         setTimeout(() => initHistoryOnceReady(), 120);
@@ -884,3 +867,4 @@
   </script>
 </body>
 </html>
+
