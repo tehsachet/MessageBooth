@@ -20,7 +20,7 @@
       margin:0;
       overflow:hidden;
       font-family:"League Spartan", system-ui, Arial, sans-serif;
-      background: var(--frame); /* ✅ dulu #000 */
+      background: var(--frame);
     }
 
     .scene{
@@ -495,14 +495,9 @@
         document.body.appendChild(a);
         a.click();
         a.remove();
-      } catch (err){
-        alert(
-          "Preview-nya sudah aman.\n\n" +
-          "Tapi browser kamu ngeblok export PNG karena dibuka via file://.\n" +
-          "Coba jalankan via server (misal: Live Server / GitHub Pages), lalu download akan normal."
-        );
-      }
+      } catch (err){}
     });
   </script>
 </body>
 </html>
+
