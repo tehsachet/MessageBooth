@@ -1,7 +1,6 @@
-/* bgm.js — GLOBAL sound controller + resume time across pages */
 (() => {
-  const STORAGE_KEY = "mb_sound";        // "on" | "off"
-  const TIME_KEY = "mb_bgm_time";        // seconds (string)
+  const STORAGE_KEY = "mb_sound";        
+  const TIME_KEY = "mb_bgm_time";        
   const ICON_MUTE = "Assets/page1/mute.png";
   const ICON_UNMUTE = "Assets/page1/unmute.png";
   const BGM_SRC = "Assets/page1/bgm.mp3";
@@ -35,7 +34,6 @@
 
   function saveTimeNow() {
     if (!audio) return;
-    // prevent storing NaN/Infinity
     const t = Number(audio.currentTime);
     if (!Number.isFinite(t) || t < 0) return;
     try { localStorage.setItem(TIME_KEY, String(t)); } catch {}
@@ -47,14 +45,12 @@
     audio = new Audio(resolveUrl(BGM_SRC));
     audio.loop = true;
     audio.preload = "auto";
-    audio.volume = 1;
+    audio.volume = 0.2;
 
-    // try restore time when metadata is available
     const saved = getSavedTime();
     if (saved > 0) {
       audio.addEventListener("loadedmetadata", () => {
         try {
-          // if duration known, clamp
           if (Number.isFinite(audio.duration) && audio.duration > 0) {
             audio.currentTime = Math.min(saved, Math.max(0, audio.duration - 0.25));
           } else {
@@ -64,7 +60,6 @@
       }, { once: true });
     }
 
-    // keep saving while playing
     audio.addEventListener("play", () => {
       if (saveTimer) clearInterval(saveTimer);
       saveTimer = setInterval(saveTimeNow, 700);
@@ -78,17 +73,13 @@
       }
     });
 
-    // also save sometimes naturally
     audio.addEventListener("timeupdate", () => {
-      // light touch: don't write too often here
-      // (interval handles most of it)
     });
 
     return audio;
   }
 
   function applyDefaultButtonStyle(btn) {
-    // Only to prevent "button invisible" cases.
     btn.style.width = btn.style.width || "76px";
     btn.style.height = btn.style.height || "76px";
     btn.style.border = btn.style.border || "none";
@@ -124,7 +115,6 @@
   async function play() {
     const a = ensureAudio();
 
-    // restore time (best effort) just before play
     const saved = getSavedTime();
     if (saved > 0 && Number.isFinite(a.currentTime) && a.currentTime < 0.05) {
       try { a.currentTime = saved; } catch {}
@@ -142,13 +132,12 @@
   function stop() {
     if (!audio) return;
     audio.pause();
-    // do NOT reset to 0; keep last time so it resumes
     saveTimeNow();
   }
 
   function wireSoundButton() {
     const btnSound = document.getElementById("btn-sound");
-    const hitSound = document.getElementById("hit-sound"); // legacy optional
+    const hitSound = document.getElementById("hit-sound"); 
     const clickTarget = hitSound || btnSound;
 
     if (!btnSound) {
@@ -158,12 +147,9 @@
 
     applyDefaultButtonStyle(btnSound);
 
-    // initial UI state
     const state = getState();
     const isOn = state === "on";
     setIcon(btnSound, isOn);
-
-    // If state ON, try continue (won't restart)
     if (isOn) play();
     else stop();
 
@@ -177,15 +163,13 @@
         setIcon(btnSound, false);
       } else {
         setState("on");
-        await play();           // continue from saved time
+        await play();           
         setIcon(btnSound, true);
       }
     });
 
-    // Save time on navigation/reload
     const saveAndCleanup = () => {
       saveTimeNow();
-      // don't clear TIME_KEY; we want resume
       if (saveTimer) {
         clearInterval(saveTimer);
         saveTimer = null;
@@ -201,3 +185,4 @@
 
   document.addEventListener("DOMContentLoaded", wireSoundButton);
 })();
+
