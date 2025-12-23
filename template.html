@@ -21,10 +21,9 @@
       overflow:hidden;
       font-family: system-ui, Arial, sans-serif;
       color: var(--text);
-      background: var(--frame); /* ✅ dulu #000 */
+      background: var(--frame); 
     }
 
-    /* SCENE */
     .scene{
       position: relative;
       z-index: 10;
@@ -51,7 +50,6 @@
       -webkit-user-drag:none;
     }
 
-    /* ===== BACK BUTTON (ADA ANIMASI) ===== */
     @keyframes hoverWiggleScale {
       0%   { transform: scale(1.03) rotate(0deg); }
       35%  { transform: scale(1.03) rotate(0.8deg); }
@@ -79,7 +77,6 @@
       animation: hoverWiggleScale 0.55s ease-in-out infinite;
     }
 
-    /* SOUND */
     #btn-sound{
       position:absolute;
       top:16px;
@@ -95,7 +92,6 @@
       z-index:60;
     }
 
-    /* TEMPLATE GRID */
     .templates{
       position:absolute;
       inset:0;
@@ -142,7 +138,6 @@
       -webkit-user-drag:none;
     }
 
-    /* ===== IDLE FLOAT ===== */
     .tpl:nth-child(1) .card{ animation: floatA 3.2s ease-in-out infinite; }
     .tpl:nth-child(2) .card{ animation: floatB 3.6s ease-in-out infinite; }
     .tpl:nth-child(3) .card{ animation: floatC 3.4s ease-in-out infinite; }
@@ -151,7 +146,6 @@
     @keyframes floatB{ 0%,100%{ transform: translateY(-1px);} 50%{ transform: translateY(6px);} }
     @keyframes floatC{ 0%,100%{ transform: translateY(1px);} 50%{ transform: translateY(-5px);} }
 
-    /* HOVER */
     .tpl:hover .card{
       filter: brightness(0.95);
       transform: translateY(-10px);
@@ -160,7 +154,6 @@
         0 10px 18px rgba(0,0,0,0.22);
     }
 
-    /* CLICK POP */
     .card.is-pop{
       transform: translateY(-12px) scale(1.03);
     }
