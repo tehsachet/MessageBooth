@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Message Booth — Choose Template</title>
+
+  <script src="bgm.js" defer></script>
+
+  <style>
+    :root{
+      --frame:#2b163a;
+      --text:#ffffff;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+
+    body{
+      margin:0;
+      overflow:hidden;
+      font-family: system-ui, Arial, sans-serif;
+      color: var(--text);
+      background: var(--frame); /* ✅ dulu #000 */
+    }
+
+    /* SCENE */
+    .scene{
+      position: relative;
+      z-index: 10;
+      width: 100vw;
+      height: 100vh;
+      display:grid;
+      place-items:center;
+    }
+    .stage{
+      position: relative;
+      width: min(100vw, calc(100vh * 16 / 9));
+      height: min(100vh, calc(100vw * 9 / 16));
+      overflow:hidden;
+    }
+
+    .bg{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      z-index:0;
+      user-select:none;
+      -webkit-user-drag:none;
+    }
+
+    /* ===== BACK BUTTON (ADA ANIMASI) ===== */
+    @keyframes hoverWiggleScale {
+      0%   { transform: scale(1.03) rotate(0deg); }
+      35%  { transform: scale(1.03) rotate(0.8deg); }
+      70%  { transform: scale(1.03) rotate(-0.8deg); }
+      100% { transform: scale(1.03) rotate(0deg); }
+    }
+
+    #btn-back{
+      position:absolute;
+      top:16px;
+      left:16px;
+      width:126px;
+      height:126px;
+      border:none;
+      background:transparent url("Assets/page3/back1.png") center/contain no-repeat;
+      cursor:pointer;
+      z-index:60;
+      transition: filter 120ms ease, transform 150ms ease;
+      will-change: transform, filter;
+    }
+    #btn-back:hover,
+    #btn-back:active{
+      background-image:url("Assets/page3/back2.png");
+      filter: brightness(0.95);
+      animation: hoverWiggleScale 0.55s ease-in-out infinite;
+    }
+
+    /* SOUND */
+    #btn-sound{
+      position:absolute;
+      top:16px;
+      right:18px;
+      width:56px;
+      height:56px;
+      border:none;
+      background:transparent;
+      background-repeat:no-repeat;
+      background-size:contain;
+      background-position:center;
+      cursor:pointer;
+      z-index:60;
+    }
+
+    /* TEMPLATE GRID */
+    .templates{
+      position:absolute;
+      inset:0;
+      display:grid;
+      place-items:center;
+      padding:140px 56px 70px;
+    }
+
+    .grid{
+      width: min(1280px, 96%);
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:42px;
+      justify-items:center;
+    }
+
+    .tpl{
+      border:none;
+      background:transparent;
+      cursor:pointer;
+    }
+
+    .card{
+      width:240px;
+      aspect-ratio:3/4;
+      border-radius:18px;
+      overflow:hidden;
+      background:rgba(255,255,255,0.06);
+      box-shadow:
+        0 10px 22px rgba(0,0,0,0.22),
+        0 2px 0 rgba(255,255,255,0.08) inset;
+      transition:
+        transform 180ms ease,
+        filter 130ms ease,
+        box-shadow 180ms ease;
+    }
+
+    .card img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+      user-select:none;
+      -webkit-user-drag:none;
+    }
+
+    /* ===== IDLE FLOAT ===== */
+    .tpl:nth-child(1) .card{ animation: floatA 3.2s ease-in-out infinite; }
+    .tpl:nth-child(2) .card{ animation: floatB 3.6s ease-in-out infinite; }
+    .tpl:nth-child(3) .card{ animation: floatC 3.4s ease-in-out infinite; }
+
+    @keyframes floatA{ 0%,100%{ transform: translateY(0);} 50%{ transform: translateY(-6px);} }
+    @keyframes floatB{ 0%,100%{ transform: translateY(-1px);} 50%{ transform: translateY(6px);} }
+    @keyframes floatC{ 0%,100%{ transform: translateY(1px);} 50%{ transform: translateY(-5px);} }
+
+    /* HOVER */
+    .tpl:hover .card{
+      filter: brightness(0.95);
+      transform: translateY(-10px);
+      box-shadow:
+        0 22px 44px rgba(0,0,0,0.42),
+        0 10px 18px rgba(0,0,0,0.22);
+    }
+
+    /* CLICK POP */
+    .card.is-pop{
+      transform: translateY(-12px) scale(1.03);
+    }
+
+    @keyframes shakeSmall{
+      0%{ transform: translateY(-12px) scale(1.03) rotate(0deg); }
+      50%{ transform: translateY(-12px) scale(1.03) rotate(0.7deg); }
+      100%{ transform: translateY(-12px) scale(1.03) rotate(0deg); }
+    }
+    .card.is-shake{ animation: shakeSmall 240ms ease-in-out; }
+  </style>
+</head>
+
+<body>
+  <main class="scene">
+    <section class="stage">
+      <img class="bg" src="Assets/page2/background.png" alt="Background">
+
+      <button id="btn-back"></button>
+      <button id="btn-sound"></button>
+
+      <div class="templates">
+        <div class="grid" id="tplGrid">
+          <button class="tpl" data-template="Assets/page2/template1.png">
+            <div class="card"><img src="Assets/page2/template1.png"></div>
+          </button>
+          <button class="tpl" data-template="Assets/page2/template2.png">
+            <div class="card"><img src="Assets/page2/template2.png"></div>
+          </button>
+          <button class="tpl" data-template="Assets/page2/template3.png">
+            <div class="card"><img src="Assets/page2/template3.png"></div>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "mb_template";
+    const NEXT_PAGE = "edit.html";
+
+    function popAnim(card){
+      card.classList.add("is-pop","is-shake");
+      setTimeout(()=>card.classList.remove("is-pop","is-shake"),260);
+    }
+
+    document.getElementById("tplGrid").onclick = e=>{
+      const btn = e.target.closest(".tpl");
+      if(!btn) return;
+      const card = btn.querySelector(".card");
+      popAnim(card);
+      localStorage.setItem(STORAGE_KEY, btn.dataset.template);
+      setTimeout(()=>location.href = NEXT_PAGE,260);
+    };
+
+    document.getElementById("btn-back").onclick = ()=>{
+      location.href = "index.html";
+    };
+  </script>
+</body>
+</html>

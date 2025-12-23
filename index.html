@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Message Booth</title>
+
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- GLOBAL BGM -->
+  <script src="bgm.js" defer></script>
+
+  <!-- PAGE 1 LOGIC -->
+  <script src="page1.js" defer></script>
+
+  <style>
+    /* ======================================================
+       INDEX.HTML OVERRIDE ONLY
+       Tujuan:
+       1) bintang & shooting star masuk "wilayah langit" (stage)
+       2) bintang ada DI ATAS sky-night (bukan di bawah)
+       3) tidak meleber ke body (area frame/background)
+       ====================================================== */
+
+    /* body jadi warna frame (nutup area kosong) */
+    html, body { height: 100%; }
+    body{
+      margin:0;
+      overflow:hidden;
+      background:#2b163a;
+    }
+    body.night{ background:#2b163a; }
+
+    /* pastiin stage jadi anchor + clip */
+    .stage{
+      position: relative;
+      overflow: hidden;       /* ✅ kunci: apapun di dalam stage gak bisa keluar */
+      isolation: isolate;     /* ✅ stacking context biar z-index aman */
+    }
+
+    /* HUD buttons: keep posisi kamu */
+    .hud-btn{
+      width: 76px !important;
+      height: 76px !important;
+      border: none;
+      background-color: transparent;
+      cursor: pointer;
+
+      background-repeat: no-repeat;
+      background-size: contain;
+      background-position: center;
+
+      pointer-events: auto;
+      z-index: 99999;
+    }
+    #btn-ig{
+      position: absolute !important;
+      top: 14px !important;
+      left: 18px !important;
+    }
+    #btn-sound{
+      position: absolute !important;
+      top: 14px !important;
+      right: 18px !important;
+    }
+
+    /* sky/road fit like buildings */
+    .layer.sky,
+    .layer.road{
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center;
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+    }
+
+    /* urutan layer */
+    .layer.sky{ z-index: 0; }
+    #sky-night{ opacity: 0; transition: opacity 240ms ease; }
+    #sky-day{ opacity: 1; transition: opacity 240ms ease; }
+    body.night #sky-day{ opacity: 0; }
+    body.night #sky-night{ opacity: 1; }
+
+    .layer.road{ z-index: 1; }
+    #road{ transition: filter 240ms ease; }
+    body.night #road{ filter: brightness(0.78) saturate(0.95); }
+
+    /* ======================================================
+       1) MATIKAN STARS LAMA DARI style.css
+       (yang nempel di body.night::before/after dan fixed)
+       Ini sumber utama bintang meleber ke area luar stage.
+       ====================================================== */
+    body.night::before,
+    body.night::after{
+      content: none !important;
+      display: none !important;
+    }
+
+    /* ======================================================
+       2) STARS BARU: NEMPEL KE STAGE (DI ATAS SKY)
+       ====================================================== */
+    .sky-stars{
+      position:absolute;
+      inset:0;
+      z-index: 2;            /* ✅ di atas sky (0) dan road (1) */
+      pointer-events:none;
+      overflow:hidden;       /* extra safety */
+      opacity: 0;
+      transition: opacity 240ms ease;
+    }
+    body.night .sky-stars{ opacity: 1; }
+
+    /* layer bintang kecil (mirip yang di style.css) */
+    .sky-stars::before,
+    .sky-stars::after{
+      content:"";
+      position:absolute;
+      left:0;
+      right:0;
+      top:0;
+      height: 62%;
+      pointer-events:none;
+
+      -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 90%);
+      mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 90%);
+    }
+
+    .sky-stars::before{
+      background:
+        radial-gradient(circle at 7% 12%, rgba(255,255,255,.95) 1.2px, transparent 2px),
+        radial-gradient(circle at 18% 28%, rgba(255,255,255,.85) 1.1px, transparent 2px),
+        radial-gradient(circle at 24% 8%, rgba(255,255,255,.9) 1.3px, transparent 2px),
+        radial-gradient(circle at 33% 22%, rgba(255,255,255,.8) 1.0px, transparent 2px),
+        radial-gradient(circle at 41% 15%, rgba(255,255,255,.95) 1.2px, transparent 2px),
+        radial-gradient(circle at 52% 27%, rgba(255,255,255,.85) 1.1px, transparent 2px),
+        radial-gradient(circle at 61% 10%, rgba(255,255,255,.9) 1.3px, transparent 2px),
+        radial-gradient(circle at 73% 24%, rgba(255,255,255,.8) 1.0px, transparent 2px),
+        radial-gradient(circle at 82% 14%, rgba(255,255,255,.95) 1.2px, transparent 2px),
+        radial-gradient(circle at 93% 30%, rgba(255,255,255,.85) 1.1px, transparent 2px),
+        radial-gradient(circle at 11% 46%, rgba(255,255,255,.9) 1.2px, transparent 2px),
+        radial-gradient(circle at 29% 44%, rgba(255,255,255,.8) 1.0px, transparent 2px),
+        radial-gradient(circle at 47% 48%, rgba(255,255,255,.95) 1.2px, transparent 2px),
+        radial-gradient(circle at 66% 42%, rgba(255,255,255,.85) 1.1px, transparent 2px),
+        radial-gradient(circle at 88% 47%, rgba(255,255,255,.9) 1.2px, transparent 2px);
+
+      filter: drop-shadow(0 0 10px rgba(255,255,255,0.85));
+      animation: starsDriftA 70s linear infinite, starsTwinkleA 3.1s ease-in-out infinite;
+    }
+
+    .sky-stars::after{
+      background:
+        radial-gradient(circle at 12% 18%, rgba(255,255,255,.95) 2.2px, transparent 3px),
+        radial-gradient(circle at 27% 33%, rgba(255,255,255,.85) 2.0px, transparent 3px),
+        radial-gradient(circle at 38% 12%, rgba(255,255,255,.9) 2.3px, transparent 3px),
+        radial-gradient(circle at 55% 20%, rgba(255,255,255,.95) 2.2px, transparent 3px),
+        radial-gradient(circle at 69% 34%, rgba(255,255,255,.85) 2.0px, transparent 3px),
+        radial-gradient(circle at 84% 16%, rgba(255,255,255,.9) 2.3px, transparent 3px);
+
+      filter: drop-shadow(0 0 14px rgba(255,255,255,0.9));
+      animation: starsDriftB 110s linear infinite, starsTwinkleB 4.6s ease-in-out infinite;
+    }
+
+    /* same keyframes (nama sama seperti style.css biar konsisten) */
+    @keyframes starsDriftA {
+      from { transform: translate3d(0,0,0); }
+      to   { transform: translate3d(-140px, 70px, 0); }
+    }
+    @keyframes starsDriftB {
+      from { transform: translate3d(0,0,0); }
+      to   { transform: translate3d(-90px, 45px, 0); }
+    }
+    @keyframes starsTwinkleA {
+      0%,100% { opacity: 1; }
+      50%     { opacity: 0.55; }
+    }
+    @keyframes starsTwinkleB {
+      0%,100% { opacity: 0.95; }
+      50%     { opacity: 0.45; }
+    }
+
+    /* ======================================================
+       3) SHOOTING STAR: PAKSA MASUK STAGE & DI ATAS SKY
+       (matikan versi fixed dari style.css dengan override)
+       ====================================================== */
+    .shooting-star{
+      position: absolute !important;     /* ✅ override fixed */
+      width: 220px;
+      height: 2px;
+      background: linear-gradient(to right, transparent, #fff);
+      opacity: 0;
+      z-index: 3;                        /* ✅ di atas stars + sky */
+      pointer-events: none;
+      filter: drop-shadow(0 0 6px rgba(255,255,255,0.7));
+    }
+
+    body.night .shooting-star{
+      animation: shootStage 40s linear infinite;
+    }
+
+    /* versi stage-friendly (pakai % biar relatif ke stage) */
+    @keyframes shootStage{
+      0%, 90% { opacity: 0; transform: translate(-30%, -10%) rotate(-20deg); }
+      92%     { opacity: 1; transform: translate(10%, 10%) rotate(-20deg); }
+      95%     { opacity: 0; transform: translate(30%, 20%) rotate(-20deg); }
+      100%    { opacity: 0; transform: translate(30%, 20%) rotate(-20deg); }
+    }
+
+    /* toggle kanan bawah */
+    .night-toggle{
+      position: fixed !important;
+      right: 16px !important;
+      bottom: 16px !important;
+      top: auto !important;
+      z-index: 99999;
+    }
+
+    /* rotate overlay */
+    #rotateOverlay{
+      position: fixed;
+      inset: 0;
+      z-index: 1000000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(0,0,0,0.88);
+      pointer-events: auto;
+    }
+    #rotateOverlay .rotate-card{
+      width: min(520px, 92vw);
+      border-radius: 18px;
+      padding: 22px 18px 18px;
+      text-align: center;
+      color: #fff;
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 22px 50px rgba(0,0,0,0.45);
+      font-family: system-ui, Arial, sans-serif;
+    }
+    #rotateOverlay .phone{
+      width: 120px;
+      height: 70px;
+      margin: 0 auto 10px;
+      border-radius: 14px;
+      border: 3px solid rgba(255,255,255,0.85);
+      position: relative;
+      transform-origin: 50% 50%;
+      animation: phoneRotate 1.15s ease-in-out infinite;
+    }
+    #rotateOverlay .phone:before{
+      content: "";
+      position: absolute;
+      inset: 9px;
+      border-radius: 10px;
+      border: 2px solid rgba(255,255,255,0.35);
+    }
+    #rotateOverlay .arrow{
+      margin: 8px auto 0;
+      width: 110px;
+      height: 30px;
+      position: relative;
+      opacity: 0.9;
+    }
+    #rotateOverlay .arrow:before,
+    #rotateOverlay .arrow:after{
+      content:"";
+      position:absolute;
+      top: 50%;
+      width: 46px;
+      height: 2px;
+      background: rgba(255,255,255,0.85);
+    }
+    #rotateOverlay .arrow:before{ left: 0; }
+    #rotateOverlay .arrow:after{ right: 0; }
+    #rotateOverlay .arrow i{
+      position:absolute;
+      left: 50%;
+      top: 50%;
+      width: 10px;
+      height: 10px;
+      border-right: 2px solid rgba(255,255,255,0.85);
+      border-bottom: 2px solid rgba(255,255,255,0.85);
+      transform: translate(-50%,-50%) rotate(-45deg);
+    }
+    #rotateOverlay .rotate-title{
+      margin: 10px 0 6px;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    #rotateOverlay .rotate-sub{
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.3;
+      opacity: 0.95;
+      font-weight: 500;
+    }
+    @keyframes phoneRotate{
+      0%   { transform: rotate(0deg); }
+      35%  { transform: rotate(0deg); }
+      70%  { transform: rotate(90deg); }
+      100% { transform: rotate(90deg); }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ROTATE OVERLAY -->
+  <div id="rotateOverlay" aria-hidden="true">
+    <div class="rotate-card" role="dialog" aria-modal="true" aria-label="Rotate device">
+      <div class="phone"></div>
+      <div class="arrow"><i></i></div>
+      <div class="rotate-title">Rotate your device</div>
+      <p class="rotate-sub">Please switch to <b>landscape</b> to continue.</p>
+    </div>
+  </div>
+
+  <!-- SCENE -->
+  <main class="scene">
+    <section class="stage" id="stage" aria-label="Message Booth Scene">
+
+      <!-- SKY -->
+      <img id="sky-night" class="layer sky" src="Assets/page1/sky-night.png" alt="sky night">
+
+      <!-- ✅ STARS (stage-only, night-only, above sky) -->
+      <div class="sky-stars" aria-hidden="true"></div>
+
+      <!-- ✅ SHOOTING STAR (stage-only, above sky) -->
+      <div class="shooting-star" aria-hidden="true"></div>
+
+      <!-- ROAD -->
+      <img id="road" class="layer road" src="Assets/page1/road.png" alt="road">
+
+      <!-- ASSETS -->
+      <img class="layer buildings" src="Assets/page1/buildings.png" alt="buildings">
+      <img class="layer shadow" src="Assets/page1/shadow.png" alt="shadow">
+      <img class="layer inner" src="Assets/page1/booth-inner.png" alt="booth inner">
+      <img class="layer booth" id="booth-img" src="Assets/page1/booth.png" alt="booth">
+
+      <button id="booth-hit" class="booth-hit" type="button" aria-label="Open Message Booth"></button>
+
+      <!-- WALKERS -->
+      <div id="walkers-layer" class="walkers-layer" aria-hidden="true"></div>
+
+      <!-- HUD -->
+      <button id="btn-ig" class="hud-btn" type="button" aria-label="Instagram"></button>
+      <button id="btn-sound" class="hud-btn" type="button" aria-label="Sound"></button>
+    </section>
+  </main>
+
+  <!-- FADE -->
+  <div id="fade" class="fade" aria-hidden="true"></div>
+
+  <!-- IG icon via CSS -->
+  <style>
+    #btn-ig{ background-image: url("Assets/page1/instagram.png"); }
+  </style>
+
+  <!-- klik IG -> instagram -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const ig = document.getElementById("btn-ig");
+      if (!ig) return;
+      ig.addEventListener("click", () => {
+        window.open("https://instagram.com/delman.17", "_blank", "noopener,noreferrer");
+      });
+    });
+  </script>
+
+</body>
+</html>

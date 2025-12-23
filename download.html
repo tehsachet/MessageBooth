@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Message Booth — Result</title>
+
+  <script src="bgm.js" defer></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root{ --frame:#2b163a; }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      overflow:hidden;
+      font-family:"League Spartan", system-ui, Arial, sans-serif;
+      background: var(--frame); /* ✅ dulu #000 */
+    }
+
+    .scene{
+      position:relative;
+      z-index:10;
+      width:100vw;
+      height:100vh;
+      display:grid;
+      place-items:center;
+    }
+    .stage{
+      position:relative;
+      width: min(100vw, calc(100vh * 16 / 9));
+      height:min(100vh, calc(100vw * 9 / 16));
+      overflow:hidden;
+      background:#000;
+    }
+
+    .bg{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      object-position:center;
+      z-index:0;
+      user-select:none;
+      -webkit-user-drag:none;
+    }
+
+    @keyframes hoverWiggleScale {
+      0%   { transform: scale(1.03) rotate(0deg); }
+      35%  { transform: scale(1.03) rotate(0.8deg); }
+      70%  { transform: scale(1.03) rotate(-0.8deg); }
+      100% { transform: scale(1.03) rotate(0deg); }
+    }
+
+    #btn-sound{
+      position:absolute;
+      top:14px; right:18px;
+      width:76px; height:76px;
+      border:none;
+      background:transparent;
+      cursor:pointer;
+      background-repeat:no-repeat;
+      background-size:contain;
+      background-position:center;
+      z-index:90;
+      transition: transform 160ms ease, filter 120ms ease;
+    }
+    #btn-sound:hover,
+    #btn-sound:active{
+      filter: brightness(0.95);
+      transform: translateY(-2px);
+    }
+
+    #btn-back{
+      position:absolute;
+      top:16px; left:16px;
+      width:126px; height:126px;
+      border:none;
+      background:transparent url("Assets/page3/back1.png") center/contain no-repeat;
+      cursor:pointer;
+      z-index:90;
+      transition: filter 120ms ease, transform 150ms ease;
+      will-change: transform, filter;
+    }
+    #btn-back:hover,
+    #btn-back:active{
+      background-image:url("Assets/page3/back2.png");
+      filter: brightness(0.95);
+      animation: hoverWiggleScale 0.55s ease-in-out infinite;
+    }
+
+    .wrap{
+      position:absolute;
+      inset:0;
+      z-index:2;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 32px;
+      padding: 140px 60px 90px;
+    }
+
+    .result-card{
+      position:relative;
+      width: min(520px, 44%);
+      aspect-ratio: 3 / 4;
+      border-radius: 18px;
+      overflow:hidden;
+      box-shadow: 0 10px 18px rgba(0,0,0,0.18);
+      background: rgba(255,255,255,0.02);
+      user-select:none;
+      transform: translateX(30px) translateY(-25px);
+    }
+
+    .result-inner{
+      position:absolute;
+      top:0; left:0;
+      width: 520px;
+      height: 693px;
+      transform-origin: top left;
+    }
+
+    .layer{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+      user-select:none;
+      -webkit-user-drag:none;
+      pointer-events:none;
+    }
+
+    #resultTextLayer{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+    }
+    #resultTextLayer .textbox{
+      position:absolute;
+      min-width:140px;
+      min-height:48px;
+      max-width:92%;
+      padding:10px 12px;
+
+      border:none;
+      border-radius:12px;
+      background: transparent;
+
+      font-family:"League Spartan", system-ui, Arial, sans-serif;
+      font-weight:600;
+      font-size: 20px;
+      line-height: 1.15;
+      color:#333128;
+
+      white-space:pre-wrap;
+      pointer-events:none;
+    }
+
+    .right-col{
+      width: 280px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: 0px;
+      user-select:none;
+
+      transform: translate(20px) translateY(-20px)
+    }
+
+    .big-btn{
+      width: 250px;
+      height: 120px;
+      border:none;
+      background:transparent;
+      cursor:pointer;
+      background-repeat:no-repeat;
+      background-size:contain;
+      background-position:center;
+      transition: filter 120ms ease, transform 150ms ease;
+      will-change: transform, filter;
+    }
+    .big-btn:hover,
+    .big-btn:active{
+      filter: brightness(0.98);
+      animation: hoverWiggleScale 0.55s ease-in-out infinite;
+      transform: scale(1.01);
+    }
+
+    #btn-download{ background-image:url("Assets/page4/download1.png"); }
+    #btn-send{
+      background-image:url("Assets/page4/send1.png");
+      margin-bottom: 0px;
+      margin-top: -20px;
+    }
+
+    #btn-town{
+      width: 250px;
+      height: 210px;
+      background-image:url("Assets/page4/BackToTown.png");
+    }
+  </style>
+</head>
+
+<body>
+  <main class="scene">
+    <section class="stage">
+      <img class="bg" src="Assets/page4/background.png" alt="Background" onerror="this.style.display='none'">
+
+      <button id="btn-back" type="button" aria-label="Back"></button>
+      <button id="btn-sound" type="button" aria-label="Sound"></button>
+
+      <div class="wrap">
+        <div class="result-card" id="resultCard" aria-label="Result preview">
+          <div class="result-inner" id="resultInner">
+            <img id="tplLayer" class="layer" alt="Template">
+            <img id="markerLayer" class="layer" alt="Marker">
+            <div id="resultTextLayer"></div>
+          </div>
+        </div>
+
+        <div class="right-col" aria-label="Actions">
+          <button id="btn-download" class="big-btn" type="button" aria-label="Download"></button>
+          <button id="btn-send" class="big-btn" type="button" aria-label="Send"></button>
+          <button id="btn-town" class="big-btn" type="button" aria-label="Back to Town"></button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const PAGE1 = "index.html";
+    const PAGE3 = "edit.html";
+    const FORM_URL = "https://forms.gle/aEDcf7BKAKKRGr239";
+
+    const STORAGE_EDIT = "mb_edit_state_v1";
+    const EXPORT_CACHE_KEY = "mb_last_export_png";
+    const RESTORE_FLAG = "mb_restore_from_page4";
+
+    const btnBack = document.getElementById("btn-back");
+    const btnDownload = document.getElementById("btn-download");
+    const btnSend = document.getElementById("btn-send");
+    const btnTown = document.getElementById("btn-town");
+
+    const resultCard = document.getElementById("resultCard");
+    const resultInner = document.getElementById("resultInner");
+    const tplLayer = document.getElementById("tplLayer");
+    const markerLayer = document.getElementById("markerLayer");
+    const resultTextLayer = document.getElementById("resultTextLayer");
+
+    function attachSwap(btnEl, img1, img2){
+      let t = null;
+      let flag = false;
+
+      function setImg(src){ btnEl.style.backgroundImage = `url("${src}")`; }
+
+      function start(){
+        if (t) return;
+        t = setInterval(() => {
+          flag = !flag;
+          setImg(flag ? img2 : img1);
+        }, 333);
+      }
+      function stop(){
+        if (!t) return;
+        clearInterval(t);
+        t = null;
+        flag = false;
+        setImg(img1);
+      }
+
+      btnEl.addEventListener("mouseenter", start);
+      btnEl.addEventListener("mouseleave", stop);
+      btnEl.addEventListener("pointerdown", start);
+      btnEl.addEventListener("pointerup", stop);
+      btnEl.addEventListener("pointercancel", stop);
+
+      setImg(img1);
+    }
+
+    attachSwap(btnDownload, "Assets/page4/download1.png", "Assets/page4/download2.png");
+    attachSwap(btnSend, "Assets/page4/send1.png", "Assets/page4/send2.png");
+
+    btnBack.addEventListener("click", () => {
+      try { sessionStorage.setItem(RESTORE_FLAG, "1"); } catch {}
+      window.location.href = PAGE3;
+    });
+
+    btnSend.addEventListener("click", () => {
+      window.open(FORM_URL, "_blank", "noopener,noreferrer");
+    });
+
+    btnTown.addEventListener("click", () => {
+      try { localStorage.removeItem(STORAGE_EDIT); } catch {}
+      try { localStorage.removeItem(EXPORT_CACHE_KEY); } catch {}
+      try { sessionStorage.removeItem(RESTORE_FLAG); } catch {}
+      window.location.href = PAGE1;
+    });
+
+    function safeJSONParse(str){ try { return JSON.parse(str); } catch { return null; } }
+
+    function readState(){
+      let raw = "";
+      try { raw = localStorage.getItem(STORAGE_EDIT) || ""; } catch {}
+      return safeJSONParse(raw) || {};
+    }
+
+    function scaleInner(paperW, paperH){
+      const cardW = resultCard.clientWidth;
+      const cardH = resultCard.clientHeight;
+
+      resultInner.style.width = paperW + "px";
+      resultInner.style.height = paperH + "px";
+
+      const scale = Math.min(cardW / paperW, cardH / paperH);
+      resultInner.style.transform = `scale(${scale})`;
+    }
+
+    function renderPreview(){
+      const state = readState();
+
+      const paperW = state.paperW || 520;
+      const paperH = state.paperH || Math.round((state.paperW || 520) * 4 / 3);
+
+      const templateSrc = state.templateSrcRel || "Assets/page3/template1.png";
+      const markerDataURL = state.markerDataURL || "";
+      const textHTML = state.textHTML || "";
+
+      tplLayer.src = templateSrc;
+      markerLayer.src = markerDataURL || "";
+      markerLayer.style.display = markerDataURL ? "block" : "none";
+
+      resultTextLayer.innerHTML = textHTML;
+
+      Array.from(resultTextLayer.querySelectorAll(".textbox")).forEach(tb => {
+        tb.setAttribute("contenteditable","false");
+        tb.style.border = "none";
+        tb.style.background = "transparent";
+        tb.style.resize = "none";
+        tb.style.overflow = "visible";
+        tb.style.pointerEvents = "none";
+      });
+
+      scaleInner(paperW, paperH);
+    }
+
+    window.addEventListener("resize", () => renderPreview());
+    document.addEventListener("DOMContentLoaded", () => {
+      renderPreview();
+      setTimeout(renderPreview, 120);
+    });
+
+    function loadImg(src){
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error("img load fail: " + src));
+        img.src = src;
+      });
+    }
+
+    function htmlToTextboxes(html){
+      const wrap = document.createElement("div");
+      wrap.innerHTML = html || "";
+      const nodes = Array.from(wrap.querySelectorAll(".textbox"));
+
+      return nodes.map(n => {
+        const style = n.getAttribute("style") || "";
+
+        const getNum = (prop, fallback) => {
+          const m = style.match(new RegExp(prop + "\\s*:\\s*([^;]+)","i"));
+          if (!m) return fallback;
+          const v = m[1].trim();
+          const num = parseFloat(v);
+          return Number.isFinite(num) ? num : fallback;
+        };
+
+        const left = getNum("left", 0);
+        const top = getNum("top", 0);
+        const width = getNum("width", NaN);
+
+        let color = "#333128";
+        const mc = style.match(/color\s*:\s*([^;]+)/i);
+        if (mc) color = mc[1].trim();
+
+        let fontSize = 20;
+        const mfs = style.match(/font-size\s*:\s*([^;]+)/i);
+        if (mfs) {
+          const v = parseFloat(mfs[1]);
+          if (Number.isFinite(v)) fontSize = v;
+        }
+
+        const text = (n.innerText || "").replace(/\r\n/g,"\n");
+        return { left, top, width, color, fontSize, text };
+      });
+    }
+
+    function wrapLines(ctx, text, maxWidth){
+      const lines = [];
+      const rawLines = (text || "").split("\n");
+
+      for (const raw of rawLines){
+        const words = raw.split(/\s+/).filter(Boolean);
+        if (!words.length){
+          lines.push("");
+          continue;
+        }
+        let line = words[0];
+        for (let i=1;i<words.length;i++){
+          const test = line + " " + words[i];
+          if (ctx.measureText(test).width <= maxWidth) line = test;
+          else { lines.push(line); line = words[i]; }
+        }
+        lines.push(line);
+      }
+      return lines;
+    }
+
+    async function buildCompositeDataURL(){
+      const state = readState();
+
+      const templateSrc = state.templateSrcRel || "Assets/page3/template1.png";
+      const markerDataURL = state.markerDataURL || "";
+      const textHTML = state.textHTML || "";
+
+      const outW = 1200;
+      const outH = Math.round(outW * 4 / 3);
+
+      const paperW = state.paperW || 520;
+      const paperH = state.paperH || Math.round(paperW * 4 / 3);
+      const sx = outW / paperW;
+
+      const c = document.createElement("canvas");
+      c.width = outW;
+      c.height = outH;
+      const ctx = c.getContext("2d");
+      ctx.clearRect(0,0,outW,outH);
+
+      try{
+        const tpl = await loadImg(templateSrc);
+        ctx.drawImage(tpl, 0, 0, outW, outH);
+      } catch {}
+
+      if (markerDataURL){
+        try{
+          const mk = await loadImg(markerDataURL);
+          ctx.drawImage(mk, 0, 0, outW, outH);
+        } catch {}
+      }
+
+      const boxes = htmlToTextboxes(textHTML);
+      ctx.textBaseline = "top";
+
+      for (const b of boxes){
+        const x = b.left * sx;
+        const y = b.top * sx;
+        const maxW = (Number.isFinite(b.width) ? b.width : 280) * sx;
+
+        ctx.fillStyle = b.color || "#333128";
+        ctx.font = `600 ${Math.max(12, b.fontSize * sx)}px "League Spartan", Arial, sans-serif`;
+
+        const lineH = Math.max(14, (b.fontSize * 1.15) * sx);
+        const lines = wrapLines(ctx, b.text || "", maxW);
+
+        let yy = y;
+        for (const line of lines){
+          ctx.fillText(line, x, yy);
+          yy += lineH;
+        }
+      }
+
+      return c.toDataURL("image/png");
+    }
+
+    btnDownload.addEventListener("click", async () => {
+      try{
+        let url = "";
+        try { url = localStorage.getItem(EXPORT_CACHE_KEY) || ""; } catch {}
+
+        if (!url) {
+          url = await buildCompositeDataURL();
+          try { localStorage.setItem(EXPORT_CACHE_KEY, url); } catch {}
+        }
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "MessageBooth.png";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } catch (err){
+        alert(
+          "Preview-nya sudah aman.\n\n" +
+          "Tapi browser kamu ngeblok export PNG karena dibuka via file://.\n" +
+          "Coba jalankan via server (misal: Live Server / GitHub Pages), lalu download akan normal."
+        );
+      }
+    });
+  </script>
+</body>
+</html>

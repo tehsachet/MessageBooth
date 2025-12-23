@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Message Booth — Edit</title>
+
+  <script src="bgm.js" defer></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --frame:#2b163a;
+      --ink2:#242424;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      overflow:hidden;
+      font-family:"League Spartan", system-ui, Arial, sans-serif;
+      background: var(--frame); /* ✅ dulu #000 */
+    }
+
+    .scene{
+      position:relative;
+      z-index:10;
+      width:100vw;
+      height:100vh;
+      display:grid;
+      place-items:center;
+    }
+    .stage{
+      position:relative;
+      width: min(100vw, calc(100vh * 16 / 9));
+      height:min(100vh, calc(100vw * 9 / 16));
+      overflow:hidden;
+    }
+
+    .bg{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      object-position:center;
+      z-index:0;
+      user-select:none;
+      -webkit-user-drag:none;
+    }
+
+    @keyframes hoverWiggle {
+      0%   { transform: translateY(-2px) rotate(0deg); }
+      35%  { transform: translateY(-2px) rotate(0.8deg); }
+      70%  { transform: translateY(-2px) rotate(-0.8deg); }
+      100% { transform: translateY(-2px) rotate(0deg); }
+    }
+    @keyframes hoverWiggleScale {
+      0%   { transform: scale(1.03) rotate(0deg); }
+      35%  { transform: scale(1.03) rotate(0.8deg); }
+      70%  { transform: scale(1.03) rotate(-0.8deg); }
+      100% { transform: scale(1.03) rotate(0deg); }
+    }
+
+    #btn-sound{
+      position:absolute;
+      top:14px; right:18px;
+      width:76px; height:76px;
+      border:none;
+      background:transparent;
+      cursor:pointer;
+      background-repeat:no-repeat;
+      background-size:contain;
+      background-position:center;
+      z-index:90;
+      transition: transform 160ms ease, filter 120ms ease;
+    }
+    #btn-sound:hover,
+    #btn-sound:active{
+      filter: brightness(0.95);
+      transform: translateY(-2px);
+    }
+
+    #btn-back{
+      position:absolute;
+      top:16px; left:16px;
+      width:126px; height:126px;
+      border:none;
+      background:transparent url("Assets/page3/back1.png") center/contain no-repeat;
+      cursor:pointer;
+      z-index:90;
+      transition: filter 120ms ease, transform 150ms ease;
+      will-change: transform, filter;
+    }
+    #btn-back:hover,
+    #btn-back:active{
+      background-image:url("Assets/page3/back2.png");
+      filter: brightness(0.95);
+      animation: hoverWiggleScale 0.55s ease-in-out infinite;
+    }
+
+    #btn-next{
+      position:absolute;
+      right:18px; bottom:18px;
+      width:150px; height:150px;
+      border:none;
+      background:transparent url("Assets/page3/next1.png") center/contain no-repeat;
+      cursor:pointer;
+      z-index:90;
+      transition: filter 120ms ease, transform 150ms ease;
+      will-change: transform, filter;
+    }
+    #btn-next:hover,
+    #btn-next:active{
+      background-image:url("Assets/page3/next2.png");
+      filter: brightness(0.95);
+      animation: hoverWiggleScale 0.55s ease-in-out infinite;
+    }
+
+    .editor-wrap{
+      position:absolute;
+      inset:0;
+      z-index:2;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 150px 40px 140px;
+    }
+
+    .paper{
+      position:relative;
+      width: min(520px, 44%);
+      aspect-ratio: 3 / 4;
+      border-radius:18px;
+      overflow:visible;
+      user-select:none;
+
+      /* templateX: jangan diganggu */
+      transform: translate(10px, -5px);
+    }
+
+    .paper-inner{
+      position:relative;
+      width:100%;
+      height:100%;
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow: 0 10px 18px rgba(0,0,0,0.18);
+      background: rgba(255,255,255,0.01);
+    }
+
+    #tplImg{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      pointer-events:none;
+      user-select:none;
+      -webkit-user-drag:none;
+    }
+
+    #drawCanvas{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      z-index:3;
+      pointer-events:none;
+    }
+
+    #textLayer{
+      position:absolute;
+      inset:0;
+      z-index:4;
+      pointer-events:auto;
+    }
+
+    .textbox{
+      position:absolute;
+      min-width:140px;
+      min-height:48px;
+      max-width:92%;
+      padding:10px 12px;
+      resize: both;
+      overflow:auto;
+
+      border: 1px dashed rgba(0,0,0,0.22);
+      border-radius:12px;
+      background: rgba(255,255,255,0.0);
+
+      font-family:"League Spartan", system-ui, Arial, sans-serif;
+      font-weight:600;
+      font-size: 20px;
+      line-height: 1.15;
+      color: #333128;
+
+      cursor: move;
+      touch-action:none;
+      outline:none;
+    }
+    .textbox:focus{
+      border: 1px solid rgba(0,0,0,0.26);
+      background: rgba(255,255,255,0.06);
+    }
+
+    .tools{
+      position:absolute;
+      left:16px;
+      bottom:18px;
+      z-index:80;
+      display:flex;
+      gap:14px;
+      align-items:center;
+    }
+    .tool-btn{
+      width:74px;
+      height:74px;
+      border:none;
+      background:transparent;
+      cursor:pointer;
+
+      background-repeat:no-repeat;
+      background-size:contain;
+      background-position:center;
+
+      transition: filter 120ms ease, transform 150ms ease, box-shadow 150ms ease;
+      box-shadow:none;
+      will-change: transform, filter, box-shadow;
+    }
+    .tool-btn:hover,
+    .tool-btn:active,
+    .tool-btn.is-active{
+      filter: brightness(0.95);
+      box-shadow: 0 14px 28px rgba(0,0,0,0.22);
+      border-radius: 999px;
+      animation: hoverWiggle 0.55s ease-in-out infinite;
+    }
+    #btn-marker{ background-image:url("Assets/page3/marker.png"); }
+    #btn-text{ background-image:url("Assets/page3/text.png"); }
+
+    .hist-btn{
+      position:absolute;
+      top: 6px;
+      width:110px;
+      height:110px;
+      border:none;
+      background:transparent;
+      cursor:pointer;
+
+      background-repeat:no-repeat;
+      background-size:contain;
+      background-position:center;
+
+      z-index:50;
+      transition: filter 120ms ease, transform 150ms ease;
+      will-change: transform, filter;
+    }
+    .hist-btn:hover,
+    .hist-btn:active{
+      filter: brightness(0.95);
+      animation: hoverWiggleScale 0.55s ease-in-out infinite;
+    }
+    #btn-undo{ left:-130px; background-image:url("Assets/page3/undo.png"); }
+    #btn-redo{ right:-130px; background-image:url("Assets/page3/redo.png"); }
+
+    .marker-mode{
+      cursor: url("Assets/page3/cursor.png") 6 32, crosshair;
+    }
+
+    .color-palette{
+      position:absolute;
+      left:50%;
+      bottom:24px;
+      transform: translateX(-50%) translateY(8px);
+      display:flex;
+      gap:12px;
+      padding:10px 12px;
+      border-radius:999px;
+      background: rgba(0,0,0,0.22);
+      backdrop-filter: blur(2px);
+      z-index:95;
+
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 140ms ease, transform 140ms ease;
+    }
+    .color-palette.is-visible{
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0px);
+    }
+    .color-swatch{
+      width:26px;
+      height:26px;
+      border-radius:50%;
+      border:2px solid rgba(255,255,255,0.85);
+      background: transparent;
+      cursor:pointer;
+      padding:0;
+      transition: transform 120ms ease, filter 120ms ease;
+    }
+    .color-swatch:hover,
+    .color-swatch:active{
+      filter: brightness(0.95);
+      transform: translateY(-2px) scale(1.06);
+    }
+  </style>
+</head>
+
+<body>
+  <main class="scene">
+    <section class="stage" id="stage">
+      <img class="bg" src="Assets/page3/background1.png" alt="Background">
+
+      <button id="btn-back" type="button" aria-label="Back"></button>
+      <button id="btn-sound" type="button" aria-label="Sound"></button>
+      <button id="btn-next" type="button" aria-label="Next"></button>
+
+      <div class="editor-wrap">
+        <div class="paper" id="paper">
+          <div class="paper-inner">
+            <img id="tplImg" alt="Template">
+            <canvas id="drawCanvas"></canvas>
+            <div id="textLayer"></div>
+          </div>
+
+          <button id="btn-undo" class="hist-btn" type="button" aria-label="Undo"></button>
+          <button id="btn-redo" class="hist-btn" type="button" aria-label="Redo"></button>
+        </div>
+      </div>
+
+      <div class="tools">
+        <button id="btn-marker" class="tool-btn" type="button" aria-label="Marker"></button>
+        <button id="btn-text" class="tool-btn" type="button" aria-label="Text"></button>
+      </div>
+
+      <div id="colorPalette" class="color-palette" aria-label="Text color palette">
+        <button type="button" class="color-swatch" data-color="#333128" style="background:#333128" aria-label="Color #333128"></button>
+        <button type="button" class="color-swatch" data-color="#FF76BA" style="background:#FF76BA" aria-label="Color #FF76BA"></button>
+        <button type="button" class="color-swatch" data-color="#FF823F" style="background:#FF823F" aria-label="Color #FF823F"></button>
+        <button type="button" class="color-swatch" data-color="#4B60B1" style="background:#4B60B1" aria-label="Color #4B60B1"></button>
+        <button type="button" class="color-swatch" data-color="#3D732B" style="background:#3D732B" aria-label="Color #3D732B"></button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const PAGE2 = "template.html";
+    const PAGE4 = "download.html";
+
+    const STORAGE_TEMPLATE_KEY = "mb_template";
+    const STORAGE_EDIT = "mb_edit_state_v1";
+    const EXPORT_CACHE_KEY = "mb_last_export_png";
+
+    const RESTORE_FLAG = "mb_restore_from_page4"; // sessionStorage flag
+
+    const stage = document.getElementById("stage");
+    const paper = document.getElementById("paper");
+    const tplImg = document.getElementById("tplImg");
+    const canvas = document.getElementById("drawCanvas");
+    const ctx = canvas.getContext("2d");
+    const textLayer = document.getElementById("textLayer");
+
+    const btnBack = document.getElementById("btn-back");
+    const btnNext = document.getElementById("btn-next");
+    const btnMarker = document.getElementById("btn-marker");
+    const btnText = document.getElementById("btn-text");
+    const btnUndo = document.getElementById("btn-undo");
+    const btnRedo = document.getElementById("btn-redo");
+    const palette = document.getElementById("colorPalette");
+
+    let activeTextbox = null;
+
+    function showPalette(yes){
+      if (!palette) return;
+      palette.classList.toggle("is-visible", !!yes);
+    }
+    showPalette(false);
+
+    document.addEventListener("mousedown", (e) => {
+      const clickedTextbox = e.target.closest(".textbox");
+      const clickedPalette = e.target.closest("#colorPalette");
+      const clickedTextBtn = e.target.closest("#btn-text");
+
+      if (clickedTextbox) {
+        activeTextbox = clickedTextbox;
+        showPalette(true);
+        return;
+      }
+      if (clickedPalette) return;
+      if (clickedTextBtn) return;
+
+      activeTextbox = null;
+      showPalette(false);
+    }, true);
+
+    function hidePaletteAndDeselect(){
+      activeTextbox = null;
+      showPalette(false);
+    }
+
+    function safeJSONParse(str){
+      try { return JSON.parse(str); } catch { return null; }
+    }
+
+    function resolveTemplateRelNow(){
+      let saved = "";
+      try { saved = localStorage.getItem(STORAGE_TEMPLATE_KEY) || ""; } catch {}
+      return saved || "Assets/page3/template1.png";
+    }
+
+    /* ===== SAVE STATE (hanya dipakai untuk page4 back) ===== */
+    let saveTimer = null;
+
+    function getPaperInnerRect(){
+      const inner = paper.querySelector(".paper-inner");
+      return inner.getBoundingClientRect();
+    }
+
+    function saveEditState(){
+      try{
+        const r = getPaperInnerRect();
+        const payload = {
+          templateSrcRel: resolveTemplateRelNow(),
+          markerDataURL: canvas.toDataURL("image/png"),
+          textHTML: textLayer.innerHTML,
+          paperW: Math.round(r.width),
+          paperH: Math.round(r.height),
+          savedAt: Date.now()
+        };
+        localStorage.setItem(STORAGE_EDIT, JSON.stringify(payload));
+      } catch {}
+    }
+
+    function scheduleSave(){
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(saveEditState, 180);
+    }
+
+    function clearEditStateHard(){
+      // kosongin edit total (untuk refresh / new visit)
+      try { localStorage.removeItem(STORAGE_EDIT); } catch {}
+      try { localStorage.removeItem(EXPORT_CACHE_KEY); } catch {}
+      try { sessionStorage.removeItem(RESTORE_FLAG); } catch {}
+
+      // clear UI
+      textLayer.innerHTML = "";
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      showPalette(false);
+      activeTextbox = null;
+    }
+
+    function restoreEditStateIfAllowed(){
+      // restore HANYA kalau flag dari page4 ada
+      let allow = false;
+      try { allow = sessionStorage.getItem(RESTORE_FLAG) === "1"; } catch { allow = false; }
+
+      if (!allow) {
+        clearEditStateHard();
+        tplImg.src = resolveTemplateRelNow();
+        return;
+      }
+
+      // consume flag (biar sekali pakai)
+      try { sessionStorage.removeItem(RESTORE_FLAG); } catch {}
+
+      let raw = "";
+      try { raw = localStorage.getItem(STORAGE_EDIT) || ""; } catch {}
+      const state = safeJSONParse(raw);
+      if (!state) return;
+
+      tplImg.src = state.templateSrcRel || resolveTemplateRelNow();
+
+      if (typeof state.textHTML === "string") {
+        textLayer.innerHTML = state.textHTML;
+      }
+
+      if (state.markerDataURL) {
+        const img = new Image();
+        img.onload = () => {
+          const inner = paper.querySelector(".paper-inner");
+          const rect = inner.getBoundingClientRect();
+          ctx.clearRect(0,0,canvas.width,canvas.height);
+          ctx.drawImage(img, 0, 0, rect.width, rect.height);
+        };
+        img.src = state.markerDataURL;
+      }
+
+      Array.from(textLayer.querySelectorAll(".textbox")).forEach(wireTextbox);
+      activeTextbox = null;
+      showPalette(false);
+    }
+
+    /* ===== NAV ===== */
+    btnBack.addEventListener("click", () => {
+      // balik ke page2 (pilih template) => harus “mulai baru”
+      clearEditStateHard();
+      location.href = PAGE2;
+    });
+
+    btnNext.addEventListener("click", () => {
+      // menuju page4 => save snapshot dulu
+      saveEditState();
+      location.href = PAGE4;
+    });
+
+    /* ===== CANVAS ===== */
+    function resizeCanvas() {
+      const inner = paper.querySelector(".paper-inner");
+      const rect = inner.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+      canvas.style.width = rect.width + "px";
+      canvas.style.height = rect.height + "px";
+
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+    }
+
+    function bootCanvas() {
+      resizeCanvas();
+      requestAnimationFrame(resizeCanvas);
+      setTimeout(resizeCanvas, 80);
+    }
+
+    window.addEventListener("resize", () => {
+      resizeCanvas();
+      scheduleSave();
+    });
+
+    /* ===== MODE ===== */
+    let mode = "none";
+
+    function setMode(next) {
+      mode = next;
+      btnMarker.classList.toggle("is-active", mode === "marker");
+
+      if (mode === "marker") {
+        stage.classList.add("marker-mode");
+        canvas.style.pointerEvents = "auto";
+        textLayer.style.pointerEvents = "none";
+        hidePaletteAndDeselect();
+      } else {
+        stage.classList.remove("marker-mode");
+        canvas.style.pointerEvents = "none";
+        textLayer.style.pointerEvents = "auto";
+      }
+    }
+    setMode("none");
+
+    btnMarker.addEventListener("click", () => {
+      setMode(mode === "marker" ? "none" : "marker");
+    });
+
+    btnText.addEventListener("click", () => {
+      setMode("none");
+      createTextbox();
+    });
+
+    /* ===== HISTORY ===== */
+    let history = [];
+    let redoStack = [];
+
+    function snapshot() {
+      return { canvas: canvas.toDataURL("image/png"), text: textLayer.innerHTML };
+    }
+
+    function pushHistory() {
+      history.push(snapshot());
+      if (history.length > 60) history.shift();
+      redoStack = [];
+      scheduleSave();
+    }
+
+    function restore(state) {
+      if (!state) return;
+      textLayer.innerHTML = state.text;
+
+      const img = new Image();
+      img.onload = () => {
+        const inner = paper.querySelector(".paper-inner");
+        const rect = inner.getBoundingClientRect();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, rect.width, rect.height);
+      };
+      img.src = state.canvas;
+
+      Array.from(textLayer.querySelectorAll(".textbox")).forEach(wireTextbox);
+
+      activeTextbox = null;
+      showPalette(false);
+      scheduleSave();
+    }
+
+    function initHistoryOnceReady() {
+      history = [snapshot()];
+      redoStack = [];
+    }
+
+    btnUndo.addEventListener("click", () => {
+      if (history.length <= 1) return;
+      const current = history.pop();
+      redoStack.push(current);
+      restore(history[history.length - 1]);
+    });
+
+    btnRedo.addEventListener("click", () => {
+      if (!redoStack.length) return;
+      const next = redoStack.pop();
+      history.push(next);
+      restore(next);
+    });
+
+    document.addEventListener("keydown", (e) => {
+      const key = (e.key || "").toLowerCase();
+      if (e.ctrlKey && key === "z") { e.preventDefault(); btnUndo.click(); }
+      if (e.ctrlKey && key === "y") { e.preventDefault(); btnRedo.click(); }
+    });
+
+    /* ===== DRAW ===== */
+    let drawing = false;
+
+    function localPos(ev){
+      const r = canvas.getBoundingClientRect();
+      return { x: ev.clientX - r.left, y: ev.clientY - r.top };
+    }
+
+    canvas.addEventListener("pointerdown", (ev) => {
+      if (mode !== "marker") return;
+      pushHistory();
+      drawing = true;
+      canvas.setPointerCapture(ev.pointerId);
+
+      const p = localPos(ev);
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ev.preventDefault();
+    });
+
+    canvas.addEventListener("pointermove", (ev) => {
+      if (mode !== "marker" || !drawing) return;
+
+      const p = localPos(ev);
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--ink2").trim() || "#242424";
+      ctx.lineWidth = 6;
+      ctx.globalAlpha = 0.92;
+
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+      ev.preventDefault();
+    });
+
+    function endDraw(ev){
+      if (!drawing) return;
+      drawing = false;
+      ctx.closePath();
+      ctx.globalAlpha = 1;
+      try { canvas.releasePointerCapture(ev.pointerId); } catch {}
+      scheduleSave();
+      ev.preventDefault();
+    }
+
+    canvas.addEventListener("pointerup", endDraw);
+    canvas.addEventListener("pointercancel", endDraw);
+
+    /* ===== Cursor text vs move ===== */
+    function isPointerOnText(box, clientX, clientY){
+      let range = null;
+
+      if (document.caretRangeFromPoint) {
+        range = document.caretRangeFromPoint(clientX, clientY);
+      } else if (document.caretPositionFromPoint) {
+        const pos = document.caretPositionFromPoint(clientX, clientY);
+        if (pos) {
+          range = document.createRange();
+          range.setStart(pos.offsetNode, pos.offset);
+          range.setEnd(pos.offsetNode, pos.offset);
+        }
+      }
+      if (!range) return false;
+
+      const node = range.startContainer;
+      if (!node || node.nodeType !== Node.TEXT_NODE) return false;
+      if (!box.contains(node)) return false;
+
+      const rects = range.getClientRects();
+      if (!rects || !rects.length) return false;
+
+      for (const r of rects){
+        if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) return true;
+      }
+      return false;
+    }
+
+    function wireTextbox(box){
+      let t = null;
+
+      box.addEventListener("input", () => {
+        clearTimeout(t);
+        t = setTimeout(() => pushHistory(), 250);
+      });
+
+      const ro = new ResizeObserver(() => {
+        clearTimeout(t);
+        t = setTimeout(() => pushHistory(), 220);
+      });
+      ro.observe(box);
+
+      const HOLD_MS = 180;
+
+      let holdTimer = null;
+      let dragging = false;
+
+      let startX = 0, startY = 0, origX = 0, origY = 0;
+
+      function isOnResizeHandle(ev){
+        const r = box.getBoundingClientRect();
+        const pad = 18;
+        return (ev.clientX >= r.right - pad && ev.clientY >= r.bottom - pad);
+      }
+
+      function clearHoldTimer(){
+        if (holdTimer){
+          clearTimeout(holdTimer);
+          holdTimer = null;
+        }
+      }
+
+      function beginDrag(ev){
+        const parentRect = textLayer.getBoundingClientRect();
+        const rect = box.getBoundingClientRect();
+
+        startX = ev.clientX;
+        startY = ev.clientY;
+        origX = rect.left - parentRect.left;
+        origY = rect.top - parentRect.top;
+
+        dragging = true;
+
+        box.style.userSelect = "none";
+        box.style.cursor = "move";
+        try { window.getSelection()?.removeAllRanges(); } catch {}
+
+        pushHistory();
+      }
+
+      function endDrag(){
+        if (!dragging) return;
+        dragging = false;
+        box.style.userSelect = "";
+        pushHistory();
+      }
+
+      function updateCursorFromPointer(ev){
+        if (dragging) { box.style.cursor = "move"; return; }
+        if (isOnResizeHandle(ev)) return;
+        const onText = isPointerOnText(box, ev.clientX, ev.clientY);
+        box.style.cursor = onText ? "text" : "move";
+      }
+
+      box.addEventListener("pointermove", (ev) => {
+        updateCursorFromPointer(ev);
+
+        if (!dragging) return;
+        if (isOnResizeHandle(ev)) return;
+
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+
+        const nx = origX + dx;
+        const ny = origY + dy;
+
+        const parentRect = textLayer.getBoundingClientRect();
+        const boxRect = box.getBoundingClientRect();
+        const maxX = parentRect.width - boxRect.width;
+        const maxY = parentRect.height - boxRect.height;
+
+        box.style.left = Math.max(0, Math.min(nx, maxX)) + "px";
+        box.style.top = Math.max(0, Math.min(ny, maxY)) + "px";
+
+        scheduleSave();
+        ev.preventDefault();
+      });
+
+      box.addEventListener("pointerdown", (ev) => {
+        if (isOnResizeHandle(ev)) return;
+
+        activeTextbox = box;
+        showPalette(true);
+
+        updateCursorFromPointer(ev);
+
+        dragging = false;
+        clearHoldTimer();
+
+        holdTimer = setTimeout(() => beginDrag(ev), HOLD_MS);
+
+        box.setPointerCapture(ev.pointerId);
+      });
+
+      box.addEventListener("pointerup", (ev) => {
+        clearHoldTimer();
+
+        if (dragging) {
+          endDrag();
+        } else {
+          box.focus();
+        }
+
+        try { box.releasePointerCapture(ev.pointerId); } catch {}
+        try { updateCursorFromPointer(ev); } catch {}
+        scheduleSave();
+      });
+
+      box.addEventListener("pointercancel", (ev) => {
+        clearHoldTimer();
+        if (dragging) endDrag();
+        try { box.releasePointerCapture(ev.pointerId); } catch {}
+        try { updateCursorFromPointer(ev); } catch {}
+        scheduleSave();
+      });
+
+      box.addEventListener("mouseup", scheduleSave);
+      box.addEventListener("touchend", scheduleSave);
+    }
+
+    function createTextbox(){
+      pushHistory();
+
+      const box = document.createElement("div");
+      box.className = "textbox";
+      box.contentEditable = "true";
+      box.spellcheck = false;
+      box.innerText = "Ketik sini woi";
+
+      box.style.left = "14%";
+      box.style.top = "18%";
+
+      textLayer.appendChild(box);
+
+      activeTextbox = box;
+      showPalette(true);
+
+      box.focus();
+      document.getSelection()?.selectAllChildren(box);
+
+      wireTextbox(box);
+      pushHistory();
+    }
+
+    if (palette) {
+      palette.addEventListener("click", (e) => {
+        const btn = e.target.closest(".color-swatch");
+        if (!btn) return;
+        if (!activeTextbox) return;
+
+        activeTextbox.style.color = btn.dataset.color || "#333128";
+        pushHistory();
+      });
+    }
+
+    /* ===== INIT ===== */
+    document.addEventListener("DOMContentLoaded", () => {
+      bootCanvas();
+
+      // set template dulu (always)
+      tplImg.src = resolveTemplateRelNow();
+      tplImg.onerror = () => { tplImg.src = "Assets/page3/template1.png"; };
+
+      // restore cuma kalau balik dari page4
+      setTimeout(() => {
+        restoreEditStateIfAllowed();
+        setTimeout(() => initHistoryOnceReady(), 120);
+      }, 120);
+    });
+  </script>
+</body>
+</html>
